@@ -49,17 +49,3 @@ Requisitos:
 pip install -r requirements.txt
 streamlit run src/main.py
 
-
-
----
-
-### 📌 4️⃣ Licença MIT (arquivo `LICENSE`)
-Crie um arquivo chamado **LICENSE** contendo:
-
-```text
-MIT License
-
-Permission is hereby granted, free of charge, to any person obtaining a copy of this software
-and associated documentation files (the “Software”), to deal in the Software without restriction...
-[texto completo da licença MIT]
-
