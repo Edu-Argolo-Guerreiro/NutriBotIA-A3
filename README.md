@@ -44,6 +44,18 @@ NutriBotIA/
 
 ---
 
+## ⚙️ Clonar o Repositório
+
+```bash
+git clone git@github.com:Edu-Argolo-Guerreiro/NutriBotIA-A3.git
+```
+
+```
+cd NutriBotIA-A3
+```
+
+---
+
 ## 🔧 Instalação
 
 Requisitos:
