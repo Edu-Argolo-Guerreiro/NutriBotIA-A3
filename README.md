@@ -9,6 +9,7 @@
 ✅ Metas nutricionais
 
 O projeto utiliza:
+
 - **Lógica Fuzzy** — para interpretar fatores subjetivos do usuário
 - **Algoritmos Genéticos** — para otimizar o cardápio ideal
 - **Chatbot (Streamlit)** — interface amigável acessível pelo navegador
@@ -16,16 +17,19 @@ O projeto utiliza:
 ---
 
 ## 🚀 Objetivo
+
 Auxiliar usuários na organização de uma alimentação saudável e acessível, alinhada ao seu estilo de vida.
 
 ---
 
 ## 🧠 Arquitetura
+
 Usuário → Chatbot → Módulo Fuzzy → Algoritmo Genético → Dieta Recomendada
 
 ---
 
 ## 📂 Estrutura do repositório
+
 NutriBotIA/
 ├── data/
 │ └── alimentos.csv
@@ -41,11 +45,18 @@ NutriBotIA/
 ---
 
 ## 🔧 Instalação
+
 Requisitos:
-- Python 3.10+
+
+- Python 3.12
 - pip instalado
 
 ```bash
 pip install -r requirements.txt
-streamlit run src/main.py
+```
 
+## Programa fuzzy
+
+```bash
+python .\assets\fuzzy_module\__init__.py
+```
