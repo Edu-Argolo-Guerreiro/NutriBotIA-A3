@@ -1,0 +1,111 @@
+id,nome,kcal_100g,prot_100g,carb_100g,gord_100g,preco_100g,tags
+1,Frango peito grelhado,165,31.0,0.0,3.6,1.8,proteina|aves|magro
+2,Peru peito assado,135,29.0,0.0,1.0,2.2,proteina|aves|magro
+3,Tilapia grelhada,96,20.0,0.0,2.0,3.0,proteina|peixe|magro
+4,Atum enlatado em agua,132,29.0,0.0,1.0,4.5,proteina|peixe|pratico
+5,Sardinha grelhada,208,25.0,0.0,11.0,2.8,proteina|peixe|omega3
+6,Salmao grelhado,208,20.0,0.0,13.0,7.5,proteina|peixe|omega3
+7,Ovos inteiros cozidos,155,13.0,1.1,11.0,1.3,proteina|ovos
+8,Claras de ovos,52,11.0,0.7,0.2,1.5,proteina|ovos|magro
+9,Iogurte grego zero,59,10.0,3.6,0.4,2.2,laticinio|proteina|lowfat
+10,Skyr natural,63,11.0,4.0,0.5,2.6,laticinio|proteina|lowfat
+11,Cottage light,84,12.0,3.0,2.0,2.5,laticinio|proteina|lowfat
+12,Ricota fresca,174,11.0,3.0,13.0,2.8,laticinio
+13,Leite desnatado,34,3.4,5.0,0.1,0.35,laticinio|lowfat
+14,Whey protein isolado,370,80.0,7.0,3.0,9.0,suplemento|proteina
+15,Tofu firme,76,8.0,1.9,4.8,2.4,vegetal|soja|proteina
+16,Tempeh,193,19.0,9.0,11.0,3.5,vegetal|soja|proteina
+17,Feijao preto cozido,132,9.0,24.0,0.5,0.9,leguminosa|fibra|carboidrato
+18,Lentilha cozida,116,9.0,20.0,0.4,1.1,leguminosa|fibra|carboidrato
+19,Grao de bico cozido,164,9.0,27.0,2.6,1.5,leguminosa|fibra|carboidrato
+20,Ervilha cozida,84,5.0,15.0,0.4,1.0,leguminosa|fibra|carboidrato
+21,Edamame,121,11.0,9.0,5.0,3.2,soja|proteina|fibra
+22,Arroz integral cozido,111,2.6,23.0,0.9,0.45,carboidrato|graos
+23,Arroz branco cozido,130,2.4,28.0,0.3,0.4,carboidrato|graos
+24,Quinoa cozida,120,4.4,21.0,1.9,2.4,carboidrato|graos|sem_gluten
+25,Aveia em flocos,389,17.0,66.0,7.0,1.2,carboidrato|fibra|graos
+26,Batata doce assada,90,2.0,21.0,0.1,0.6,carboidrato|raiz
+27,Batata inglesa cozida,87,2.0,20.0,0.1,0.5,carboidrato|raiz
+28,Macarrao integral cozido,124,5.0,27.0,0.9,0.7,carboidrato|massa|integral
+29,Pao integral,247,12.0,41.0,4.2,1.0,carboidrato|pao|integral
+30,Tapioca hidratada,159,0.0,39.0,0.0,0.8,carboidrato|sem_gluten
+31,Tortilha de milho,218,5.0,45.0,2.9,1.1,carboidrato|sem_gluten|pratico
+32,Arroz integral parboilizado cozido,120,2.6,25.0,1.0,0.5,carboidrato|graos
+33,Pao de centeio,259,8.5,48.0,3.3,1.3,carboidrato|pao
+34,Granola sem acucar,430,10.0,64.0,14.0,2.2,carboidrato|fibra
+35,Banana prata,89,1.1,23.0,0.3,0.8,fruta|pratico
+36,Maca,52,0.3,14.0,0.2,0.9,fruta
+37,Laranja,47,0.9,12.0,0.1,0.7,fruta
+38,Manga,60,0.8,15.0,0.4,1.4,fruta
+39,Mamao papaya,43,0.5,11.0,0.3,1.1,fruta
+40,Abacaxi,50,0.5,13.0,0.1,1.2,fruta
+41,Melancia,30,0.6,8.0,0.2,0.7,fruta|hidratacao
+42,Morango,32,0.7,7.7,0.3,2.5,fruta|baixa_caloria
+43,Mirtilo,57,0.7,14.0,0.3,4.0,fruta|antioxidante
+44,Uva,69,0.7,18.0,0.2,2.2,fruta
+45,Pera,57,0.4,15.0,0.1,1.2,fruta
+46,Kiwi,61,1.1,15.0,0.5,2.0,fruta
+47,Brocolis,34,2.8,7.0,0.4,1.2,vegetal|fibra
+48,Espinafre,23,2.9,3.6,0.4,1.1,vegetal|fibra|folhosa
+49,Couve,49,4.3,9.0,0.9,1.0,vegetal|fibra|folhosa
+50,Alface,15,1.4,2.9,0.2,0.8,vegetal|folhosa
+51,Tomate,18,0.9,3.9,0.2,0.8,vegetal
+52,Pepino,15,0.7,3.6,0.1,0.7,vegetal|hidratacao
+53,Cenoura,41,0.9,10.0,0.2,0.8,vegetal|fibra
+54,Abobrinha,17,1.2,3.1,0.3,0.9,vegetal|fibra
+55,Cebola,40,1.1,9.0,0.1,0.7,vegetal
+56,Pimentao,31,1.0,6.0,0.3,1.1,vegetal
+57,Couve flor,25,1.9,5.0,0.3,1.2,vegetal
+58,Cogumelo champignon,22,3.1,3.3,0.3,3.0,vegetal|proteina
+59,Abacate,160,2.0,9.0,15.0,3.5,fruta|gordura_boa
+60,Azeite de oliva,884,0.0,0.0,100.0,4.0,gordura|culinaria
+61,Pasta de amendoim,588,25.0,20.0,50.0,2.5,oleaginosa|gordura_boa
+62,Amendoim torrado,567,26.0,16.0,49.0,2.0,oleaginosa|gordura_boa|snack
+63,Amendoas,579,21.0,22.0,50.0,3.8,oleaginosa|gordura_boa|snack
+64,Castanha de caju,553,18.0,30.0,44.0,3.5,oleaginosa|gordura_boa|snack
+65,Castanha do para,659,14.0,12.0,67.0,5.0,oleaginosa|gordura_boa
+66,Nozes,654,15.0,14.0,65.0,4.5,oleaginosa|gordura_boa
+67,Semente de girassol,584,21.0,20.0,51.0,2.2,semente|gordura_boa
+68,Semente de abobora,559,30.0,11.0,49.0,2.4,semente|gordura_boa
+69,Semente de chia,486,17.0,42.0,31.0,3.0,semente|fibra|omega3
+70,Linhaça,534,18.0,29.0,42.0,2.5,semente|fibra|omega3
+71,Queijo minas frescal light,210,18.0,3.0,12.0,2.8,laticinio|light
+72,Queijo cottage tradicional,98,11.0,3.0,4.0,2.8,laticinio|light
+73,Iogurte natural integral,61,3.5,4.7,3.3,1.8,laticinio
+74,Iogurte natural desnatado,41,3.6,5.5,0.2,1.8,laticinio|lowfat
+75,Queijo mozarela light,253,28.0,3.0,15.0,3.8,laticinio|light
+76,Carne bovina patinho magro,170,26.0,0.0,7.0,3.2,proteina|bovina|magro
+77,Carne bovina coxao mole,190,26.0,0.0,9.0,3.5,proteina|bovina
+78,Carne moida patinho,176,26.0,0.0,8.0,3.2,proteina|bovina|magro
+79,Lombo suíno magro,165,27.0,0.0,6.0,2.9,proteina|suino|magro
+80,Peito de peru defumado light,117,17.0,3.0,3.0,3.1,proteina|processado|light
+81,Atum em agua drenado,116,26.0,0.0,0.8,4.5,proteina|peixe|pratico
+82,Camarao cozido,99,24.0,0.2,0.3,6.0,proteina|mar
+83,Bacalhau dessalgado cozido,105,23.0,0.0,1.0,7.0,proteina|peixe
+84,Pao de forma integral light,220,12.0,38.0,3.0,1.1,carboidrato|pao|light
+85,Crepioca simples,173,10.0,20.0,5.0,1.2,receita|pratico
+86,Cuscuz de milho cozido,112,3.0,25.0,0.5,0.7,carboidrato|sem_gluten
+87,Polenta cozida,70,2.0,15.0,0.3,0.6,carboidrato|sem_gluten
+88,Purê de batata,110,2.0,17.0,4.0,0.8,carboidrato
+89,Aveia farinha,400,16.0,67.0,7.0,1.3,carboidrato|fibra
+90,Farinha de amendoa,571,21.0,19.0,50.0,6.5,farinha|lowcarb|oleaginosa
+91,Farinha de coco,400,20.0,60.0,12.0,4.2,farinha|lowcarb|fibra
+92,Macarrao de arroz cozido,109,1.8,25.0,0.2,0.9,carboidrato|sem_gluten
+93,Wrap integral,230,8.0,36.0,5.0,1.8,carboidrato|pratico
+94,Quinoa em grao cru,368,14.0,64.0,6.0,3.2,carboidrato|graos|sem_gluten
+95,Arroz negro cozido,100,2.8,22.0,0.9,0.9,carboidrato|graos|integral
+96,Feijao carioca cozido,127,8.0,23.0,0.5,0.9,leguminosa|fibra|carboidrato
+97,Ervilha torta,42,3.0,7.0,0.2,1.8,vegetal|fibra
+98,Aspargos,20,2.2,3.9,0.1,3.2,vegetal|fibra
+99,Repolho,25,1.3,6.0,0.1,0.9,vegetal|fibra
+100,Berinjela,25,1.0,6.0,0.2,1.1,vegetal|fibra
+101,Beterraba cozida,44,1.7,10.0,0.2,0.9,vegetal|fibra
+102,Rucula,25,2.6,3.7,0.7,1.1,vegetal|folhosa
+103,Vagem cozida,35,2.0,7.0,0.2,1.2,vegetal|fibra
+104,Pepino japones,12,1.0,3.0,0.1,0.8,vegetal|hidratacao
+105,Molho de tomate sem acucar,35,1.8,6.0,0.2,1.2,molho|baixo_calorias
+106,Molho de iogurte light,50,3.0,4.0,2.0,1.5,molho|light
+107,Ghee,900,0.0,0.0,100.0,5.0,gordura|culinaria
+108,Queijo parmesao ralado,431,38.0,4.0,29.0,5.5,laticinio|intenso
+109,Cacau em po sem acucar,228,19.0,57.0,14.0,4.0,cacau|fibra
+110,Chocolate 70 por cento,600,7.0,46.0,43.0,6.0,doce|moderacao

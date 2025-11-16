@@ -1,50 +1,43 @@
+# assets/fuzzy_module/calcular_macros.py
 from skfuzzy import control as ctrl
 from .calcular_vet import calculo_valor_energetico_total
-import matplotlib.pyplot as plt
 import numpy as np
 import skfuzzy as fuzz
 
-# Objetivo corporal: 0=cutting, 1=manutenção, 2=bulking
-objetivo = ctrl.Antecedent(np.arange(0, 3, 1), "objetivo")
-# Nível de atividade física: 0 - 2 sedentário, 3 - 4 exercício leve, 5 - 6 exercício moderado, 7 - 8 exercício pesado, 9 - 10 atleta
-atividade = ctrl.Antecedent(np.arange(0, 11, 1), "atividade")
-# colesterol
-colesterol = ctrl.Antecedent(np.arange(0, 301, 1), "colesterol")  # A definir mg/dl
+# Universos
+objetivo = ctrl.Antecedent(np.arange(0, 3, 1), "objetivo")      # 0=CUT,1=MAN,2=BULK
+atividade = ctrl.Antecedent(np.arange(0, 11, 1), "atividade")   # 0..10
+colesterol = ctrl.Antecedent(np.arange(0, 301, 1), "colesterol")# mg/dL
 
-# Macronutrientes em g/kg
-carbo = ctrl.Consequent(np.arange(40, 80, 1), "carbo")  # Carboidratos porcentagem
-proteina = ctrl.Consequent(np.arange(10, 35, 1), "proteina")  # Proteínas %
-gordura = ctrl.Consequent(np.arange(15, 46, 1), "gordura")  # Gorduras %
+# Consequentes (em %)
+carbo = ctrl.Consequent(np.arange(40, 71, 1), "carbo")
+proteina = ctrl.Consequent(np.arange(15, 31, 1), "proteina")
+gordura = ctrl.Consequent(np.arange(15, 46, 1), "gordura")
 
-# Funções de pertinência para as entradas
-objetivo["cutting"] = fuzz.trimf(objetivo.universe, [0, 0, 1])
+# Pertinências
+objetivo["cutting"]    = fuzz.trimf(objetivo.universe, [0, 0, 1])
 objetivo["manutencao"] = fuzz.trimf(objetivo.universe, [0, 1, 2])
-objetivo["bulking"] = fuzz.trimf(objetivo.universe, [1, 2, 2])
+objetivo["bulking"]    = fuzz.trimf(objetivo.universe, [1, 2, 2])
 
-# Atividade
-atividade["baixa"] = fuzz.trimf(atividade.universe, [0, 3, 6])
-atividade["moderada"] = fuzz.trimf(atividade.universe, [3, 6, 9])
-atividade["alta"] = fuzz.trimf(atividade.universe, [6, 9, 11])
+atividade["baixa"]     = fuzz.trimf(atividade.universe, [0, 3, 6])
+atividade["moderada"]  = fuzz.trimf(atividade.universe, [3, 6, 9])
+atividade["alta"]      = fuzz.trimf(atividade.universe, [6, 9, 11])
 
-# colesterol
 colesterol["baixo"] = fuzz.trimf(colesterol.universe, [0, 120, 150])
 colesterol["medio"] = fuzz.trimf(colesterol.universe, [120, 150, 220])
-colesterol["alto"] = fuzz.trimf(colesterol.universe, [150, 200, 250])
+colesterol["alto"]  = fuzz.trimf(colesterol.universe, [150, 200, 250])
 
-# Carboidratos %
-carbo["baixo"] = fuzz.trimf(carbo.universe, [40, 45, 55])
-carbo["medio"] = fuzz.trimf(carbo.universe, [45, 55, 65])
-carbo["alto"] = fuzz.trimf(carbo.universe, [55, 65, 70])
+carbo["baixo"]  = fuzz.trimf(carbo.universe, [40, 45, 55])
+carbo["medio"]  = fuzz.trimf(carbo.universe, [45, 55, 65])
+carbo["alto"]   = fuzz.trimf(carbo.universe, [55, 65, 70])
 
-# Proteínas %
 proteina["baixa"] = fuzz.trimf(proteina.universe, [15, 18, 21])
 proteina["media"] = fuzz.trimf(proteina.universe, [18, 21, 25])
-proteina["alta"] = fuzz.trimf(proteina.universe, [21, 25, 29])
+proteina["alta"]  = fuzz.trimf(proteina.universe, [21, 25, 29])
 
-# Gorduras %
 gordura["baixa"] = fuzz.trimf(gordura.universe, [15, 20, 25])
 gordura["media"] = fuzz.trimf(gordura.universe, [20, 25, 35])
-gordura["alta"] = fuzz.trimf(gordura.universe, [25, 35, 45])
+gordura["alta"]  = fuzz.trimf(gordura.universe, [25, 35, 45])
 
 regras = [
     # ==========================================================
@@ -175,45 +168,45 @@ regras = [
     ),
 ]
 
-
 nutri_ctrl = ctrl.ControlSystem(regras)
-nutri_sim = ctrl.ControlSystemSimulation(nutri_ctrl)
 
+def _clamp(v, lo, hi): return max(lo, min(hi, v))
 
-# Essa função pega todos os dados necessários do paciente e com o uso da defuzzificação retorna os valores de carboidratos, proteinas e gorduras necessários para o objetivo do paciente
-def calcular_macros(
-    objetivo: int, atividade: int, colesterol: int, peso: float
-) -> tuple:
+def calcular_macros(objetivo_in: int, atividade_in: int, colesterol_in: int, peso: float,
+                    debug: bool=False) -> tuple[int, int, int]:
+    # Sanitização
+    objetivo_in  = int(_clamp(objetivo_in, 0, 2))
+    atividade_in = int(_clamp(atividade_in, 0, 10))
+    colesterol_in= int(_clamp(colesterol_in, 0, 300))
+    assert peso > 0, "Peso deve ser > 0"
 
-    valor_energetico_total = calculo_valor_energetico_total(objetivo, peso)
+    # Recria a simulação a cada chamada
+    sim = ctrl.ControlSystemSimulation(nutri_ctrl)
 
-    nutri_sim.input["objetivo"] = objetivo
-    nutri_sim.input["atividade"] = atividade
-    nutri_sim.input["colesterol"] = colesterol
+    sim.input["objetivo"] = objetivo_in
+    sim.input["atividade"] = atividade_in
+    sim.input["colesterol"] = colesterol_in
+    sim.compute()
 
-    nutri_sim.compute()
+    c_perc = float(sim.output["carbo"])
+    p_perc = float(sim.output["proteina"])
+    g_perc = float(sim.output["gordura"])
 
-    carbo_out = nutri_sim.output["carbo"]
-    proteina_out = nutri_sim.output["proteina"]
-    gordura_out = nutri_sim.output["gordura"]
+    # Normalização (garante soma = 100)
+    total = c_perc + p_perc + g_perc
+    c_perc, p_perc, g_perc = (x/total*100 for x in (c_perc, p_perc, g_perc))
 
-    total_raw = carbo_out + proteina_out + gordura_out
-    carbo_perc = (carbo_out / total_raw) * 100
-    proteina_perc = (proteina_out / total_raw) * 100
-    gordura_perc = (gordura_out / total_raw) * 100
+    vet = calculo_valor_energetico_total(objetivo_in, peso)
 
-    # Tirar em produção
-    carbo.view(sim=nutri_sim)
-    proteina.view(sim=nutri_sim)
-    gordura.view(sim=nutri_sim)
-    plt.show()
+    cho_g = round((vet * (c_perc/100)) / 4)
+    pro_g = round((vet * (p_perc/100)) / 4)
+    fat_g = round((vet * (g_perc/100)) / 9)
 
-    carboidratos_em_kcal = valor_energetico_total * (carbo_perc / 100)
-    proteinas_em_kcal = valor_energetico_total * (proteina_perc / 100)
-    gorduras_em_kcal = valor_energetico_total * (gordura_perc / 100)
+    if debug:
+        try:
+            import matplotlib.pyplot as plt
+            carbo.view(sim=sim); proteina.view(sim=sim); gordura.view(sim=sim); plt.show()
+        except Exception:
+            pass
 
-    carboidratos_em_gramas = round(carboidratos_em_kcal / 4)
-    proteinas_em_gramas = round(proteinas_em_kcal / 4)
-    gorduras_em_gramas = round(gorduras_em_kcal / 9)
-
-    return carboidratos_em_gramas, proteinas_em_gramas, gorduras_em_gramas
+    return cho_g, pro_g, fat_g
