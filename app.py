@@ -14,7 +14,17 @@ dados = {
     # coloque o caminho certo do seu CSV da TACO
     "tabela_csv": "assets/data/taco_min.csv",
 
-    "ag": {"pop": 80, "ger": 80, "elit": 4, "seed": 7}
+    "ag": {
+    "pesos": (4.0, 2.5, 1.2, 1.0, 1.0),
+    "high_density_kcal_threshold": 450,
+    "density_penalty_factor": 14.0,
+    "dense_big_portion_g": 80,
+    "low_kcal_bias": 0.6,
+    "debug": False,
+    "meal_carb_min": 45.0,
+    "meal_carb_coeff": 16.0,
+    }
+
 }
 
 resultado = gerar_plano_para_usuario(dados)

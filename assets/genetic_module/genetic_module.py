@@ -1,9 +1,43 @@
-from dataclasses import dataclass
-from typing import List, Dict, Tuple, Optional
-import csv, random, math
+# assets/genetic_module/genetic_module.py
+"""
+Módulo: genetic_module
+----------------------
 
+Responsável por gerar um cardápio diário utilizando um
+Algoritmo Genético (AG), a partir de:
+
+- Metas nutricionais alvo (kcal, carboidratos, proteínas, gorduras)
+- Tabela de alimentos (TACO reduzida, por exemplo)
+- Restrições (ex.: alimentos banidos, orçamento máximo, etc.)
+
+O AG trabalha criando indivíduos onde cada indivíduo representa
+um dia de cardápio, estruturado em N refeições.
+Cada refeição tem de 2 a 3 itens, com:
+    - 1 fonte base de carboidrato
+    - 1 fonte principal de proteína
+    - 0 ou 1 item “extra” (fruta, legume, cereal etc.)
+
+A função principal exposta é:
+
+    gerar_cardapio(targets: Dict, params: Dict) -> Dict
+"""
+
+from dataclasses import dataclass
+from typing import List, Dict, Tuple
+import csv
+import random
+
+print(">>> genetic_module carregado de:", __file__)  # opcional, útil para debug de import
+
+
+# ============================================================
+#   Estrutura de dados dos alimentos + carregamento da tabela
+# ============================================================
 @dataclass
 class FoodItem:
+    """
+    Representa um alimento da tabela, padronizado em por 100 g.
+    """
     id: str
     nome: str
     kcal_100g: float
@@ -13,14 +47,29 @@ class FoodItem:
     preco_100g: float = 0.0
     tags: Tuple[str, ...] = ()
 
+
 def carregar_tabela_alimentos(caminho_csv: str) -> List[FoodItem]:
-    itens = []
+    """
+    Lê um CSV de alimentos e devolve uma lista de FoodItem.
+
+    Espera colunas compatíveis com:
+      - id / ID / codigo
+      - nome / alimento
+      - kcal_100g / kcal / energia_kcal
+      - carb_100g / carboidrato_g
+      - prot_100g / proteina_g
+      - gord_100g / lipidio_g
+      - preco_100g (opcional)
+      - tags (opcional, separadas por '|')
+    """
+    itens: List[FoodItem] = []
+
     with open(caminho_csv, newline="", encoding="utf-8") as f:
         reader = csv.DictReader(f)
         for r in reader:
             try:
-                itens.append(FoodItem(
-                    id=str(r.get("id") or r.get("ID") or r.get("codigo") or len(itens)+1),
+                it = FoodItem(
+                    id=str(r.get("id") or r.get("ID") or r.get("codigo") or len(itens) + 1),
                     nome=r.get("nome") or r.get("alimento") or "item",
                     kcal_100g=float(r.get("kcal_100g") or r.get("kcal") or r.get("energia_kcal") or 0),
                     carb_100g=float(r.get("carb_100g") or r.get("carboidrato_g") or 0),
@@ -28,12 +77,107 @@ def carregar_tabela_alimentos(caminho_csv: str) -> List[FoodItem]:
                     gord_100g=float(r.get("gord_100g") or r.get("lipidio_g") or 0),
                     preco_100g=float(r.get("preco_100g") or 0),
                     tags=tuple((r.get("tags") or "").split("|")) if r.get("tags") else ()
-                ))
+                )
+                # precisa ter energia > 0 e pelo menos um macro não-zero
+                if it.kcal_100g > 0 and (it.carb_100g > 0 or it.prot_100g > 0 or it.gord_100g > 0):
+                    itens.append(it)
             except Exception:
+                # se ocorrer erro em alguma linha, apenas ignora
                 continue
-    return [it for it in itens if it.kcal_100g > 0]
+
+    return itens
+
+
+# ============================================================
+#                       Funções auxiliares
+# ============================================================
+def _has_tag(item: "FoodItem", tag: str) -> bool:
+    return any(t.lower() == tag.lower() for t in item.tags)
+
+
+def _nome_match(item: "FoodItem", frag: str) -> bool:
+    """
+    Verifica se um fragmento de texto aparece no nome do alimento
+    (case-insensitive).
+    """
+    return frag.lower() in (item.nome or "").lower()
+
+
+def _is_carb_base(item: "FoodItem") -> bool:
+    """
+    Define se o alimento pode ser considerado como base de carboidrato.
+
+    Critérios:
+      - carboidrato por 100 g >= 12 g (evita legumes/folhas com pouco CHO)
+      - carboidrato é o macro dominante (>= proteína e >= gordura)
+    """
+    if item.carb_100g < 12:
+        return False
+    return item.carb_100g >= max(item.prot_100g, item.gord_100g)
+
+
+def _is_high_protein(item: "FoodItem") -> bool:
+    """
+    Considera um alimento como 'proteico' se possui >= 15 g de proteína / 100 g.
+    Ex.: frango, ovos, iogurte proteico, whey etc.
+    """
+    return item.prot_100g >= 15.0
+
+
+def _is_high_fat(item: "FoodItem") -> bool:
+    """
+    Marca alimentos gordurosos, ideal para limitar porção:
+    - >= 15 g de gordura / 100 g
+    - OU tags de gordura/oleaginosa/semente
+    """
+    if item.gord_100g >= 15:
+        return True
+    if _has_tag(item, "gordura") or _has_tag(item, "oleaginosa") or _has_tag(item, "semente"):
+        return True
+    return False
+
+
+def _safe_portion(item: "FoodItem", por: int) -> int:
+    """
+    Garante porções em uma faixa realista e segura.
+
+    Regras:
+      - limite global: 20 a 250 g
+      - se muito denso (> 500 kcal/100g), limita a 120 g
+      - se muito proteico, limita a 180 g
+      - se muito gorduroso, limita a 60 g
+      - alguns ajustes “soft” por nome (whey, abacate, pasta de amendoim etc.)
+    """
+    por = max(20, min(250, por))
+
+    # alimentos extremamente densos
+    if item.kcal_100g > 500:
+        por = min(por, 120)
+
+    # proteínas concentradas
+    if _is_high_protein(item):
+        por = min(por, 180)
+
+    # gorduras (castanhas, óleos, sementes)
+    if _is_high_fat(item):
+        por = min(por, 60)
+
+    # limites adicionais por nome, para evitar exageros
+    if _nome_match(item, "whey"):
+        por = min(por, 60)
+    if _nome_match(item, "pasta de amendoim") or _nome_match(item, "amendoim"):
+        por = min(por, 40)
+    if _nome_match(item, "abacate"):
+        por = min(por, 120)
+
+    return por
+
 
 def _nutr_por_porcao(item: FoodItem, gramas: float):
+    """
+    Calcula os nutrientes de uma porção específica (em gramas),
+    a partir dos valores por 100 g.
+    """
     fator = gramas / 100.0
     return (
         item.kcal_100g * fator,
@@ -43,153 +187,504 @@ def _nutr_por_porcao(item: FoodItem, gramas: float):
         item.preco_100g * fator,
     )
 
+
 def _violacao_restricoes(item: FoodItem, restricoes: Dict) -> bool:
+    """
+    Verifica se o alimento viola alguma restrição declarada.
+
+    Atualmente:
+      - restricoes["banidos"]: lista de palavras-chave que não podem
+        aparecer nem no nome nem nas tags do alimento.
+    """
     banidos = set(map(str.lower, restricoes.get("banidos", [])))
-    if not banidos: 
+    if not banidos:
         return False
+
     nome = item.nome.lower()
     tags = {t.lower() for t in item.tags}
+
+    # se fragmento banido aparecer no nome ou em alguma tag → violação
     return any(b in nome for b in banidos) or (banidos & tags)
 
+
+# ============================================================
+#                     Função de Fitness
+# ============================================================
 def _avalia_cardapio(cardapio, itens_idx, itens, targets, params):
-    # Agrega totais
-    kcal=carb=prot=gord=custo=0.0
+    """
+    Avalia um indivíduo (cardápio completo do dia).
+
+    Critérios usados:
+      - Aproximação das metas globais:
+          * kcal
+          * carboidratos (g)
+          * proteínas (g)
+          * gorduras (g)
+      - Penaliza:
+          * violação de restrições (alimentos banidos)
+          * refeições com pouco carboidrato/proteína
+          * leve excesso de densidade calórica
+          * falta de variedade (muitas gramas do mesmo alimento)
+          * excesso exagerado de proteína (acima de ~140% da meta)
+    """
+    kcal = carb = prot = gord = custo = 0.0
     penal_restr = 0.0
+    dens_penalty = 0.0
+    meal_penalty = 0.0
+    variety_penalty = 0.0
+
+    # quanto de cada alimento é usado ao longo do dia
+    uso_por_id: Dict[str, float] = {}
+
+    # parâmetros por refeição (para bulking mais realista)
+    meal_min_carb = float(params.get("meal_carb_min", 45.0))      # g CHO / refeição
+    meal_carb_weight = float(params.get("meal_carb_weight", 14.0))
+    meal_min_prot = float(params.get("meal_prot_min", 15.0))      # g PRO / refeição
+    meal_prot_weight = float(params.get("meal_prot_weight", 10.0))
+
+    # limiar de densidade calórica (kcal/100g) acima do qual começamos a penalizar
+    dens_thr = float(params.get("high_density_kcal_threshold", 550.0))
+
+    # --- loop por refeição ---
     for refeicao in cardapio:
+        carbs_ref = 0.0
+        prot_ref = 0.0
+
         for (idx, porcao) in refeicao:
             item = itens[itens_idx[idx]]
-            k,c,p,g,pr = _nutr_por_porcao(item, porcao)
-            kcal+=k; carb+=c; prot+=p; gord+=g; custo+=pr
+            porcao = _safe_portion(item, porcao)
+
+            k, c, p, g, pr = _nutr_por_porcao(item, porcao)
+            kcal += k
+            carb += c
+            prot += p
+            gord += g
+            custo += pr
+
+            carbs_ref += c
+            prot_ref += p
+
+            uso_por_id[item.id] = uso_por_id.get(item.id, 0.0) + porcao
+
+            # densidade muito alta → leve penalidade
+            if item.kcal_100g > dens_thr:
+                dens_penalty += (item.kcal_100g - dens_thr) * (porcao / 100.0) * 0.2
+
+            # viola alimento banido
             if _violacao_restricoes(item, params.get("restricoes", {})):
-                penal_restr += 500.0  # penaliza forte
+                penal_restr += 500.0
 
-    # Penalidade por colesterol opcional (se vier dos dados)
-    # Aqui como placeholder (não somamos colesterol real por falta de dado)
-    # max_colesterol = params.get("restricoes", {}).get("max_colesterol_mg")
-    # if max_colesterol and colesterol_total > max_colesterol: penal += ...
+        # mínimo de carbo/ refeição
+        if carbs_ref < meal_min_carb:
+            meal_penalty += (meal_min_carb - carbs_ref) * meal_carb_weight
 
-    # Erro relativo suave (absoluto) com pesos
-    α,β,γ,δ,ε = params.get("pesos", (1.0, 0.7, 0.9, 0.7, 1.0))
-    err = (
-        α * abs(kcal - targets["kcal"]) +
-        β * abs(carb - targets["carb_g"]) * 4 +   # converte macros para kcal-like
-        γ * abs(prot - targets["prot_g"]) * 4 +
-        δ * abs(gord - targets["fat_g"])  * 9
-    )
+        # mínimo de proteína/ refeição
+        if prot_ref < meal_min_prot:
+            meal_penalty += (meal_min_prot - prot_ref) * meal_prot_weight
+
+    # penalidade por falta de variedade (muitas gramas do mesmo alimento no dia)
+    for _id, gramas in uso_por_id.items():
+        if gramas > 350:  # mais de ~3,5 porções do mesmo alimento
+            variety_penalty += (gramas - 350) * 2.0
+
+    # --- Metas globais ---
+    alvo_kcal = float(targets["kcal"])
+    alvo_c = float(targets["carb_g"])
+    alvo_p = float(targets["prot_g"])
+    alvo_g = float(targets["fat_g"])
+
+    # pesos do erro (podem ser ajustados via params["pesos"])
+    # maior peso em kcal e carboidratos; proteína com peso extra no excesso.
+    α, β, γ, δ, ε = params.get("pesos", (4.0, 3.2, 1.8, 1.2, 1.0))
+
+    # assimetrias:
+    # kcal: ficar ABAIXO dói mais que ACIMA
+    if kcal < alvo_kcal:
+        kcal_pen = 2.2 * (alvo_kcal - kcal)
+    else:
+        kcal_pen = 1.0 * (kcal - alvo_kcal)
+
+    # carbo: déficit dói mais que excesso
+    if carb < alvo_c:
+        carb_pen = 2.0 * (alvo_c - carb) * 4.0
+    else:
+        carb_pen = 1.0 * (carb - alvo_c) * 4.0
+
+    # proteína: excesso dói mais que déficit
+    if prot > alvo_p:
+        prot_pen = 2.5 * (prot - alvo_p) * 4.0
+    else:
+        prot_pen = 1.0 * (alvo_p - prot) * 4.0
+
+    # gordura: assimetria mais suave
+    if gord < alvo_g:
+        gord_pen = 1.2 * (alvo_g - gord) * 9.0
+    else:
+        gord_pen = 1.0 * (gord - alvo_g) * 9.0
+
+    # penal extra se proteína estourar MUITO (acima de 140% da meta)
+    prot_extra_pen = 0.0
+    lim_prot_alto = alvo_p * 1.4
+    if prot > lim_prot_alto:
+        prot_extra_pen = (prot - lim_prot_alto) * 40.0
+
+    # custo além do orçamento
     excesso_custo = max(0.0, custo - params.get("orcamento_max", float("inf")))
-    J = err + ε * excesso_custo + penal_restr
+
+    # erro total ponderado
+    err = α * kcal_pen + β * carb_pen + γ * prot_pen + δ * gord_pen
+
+    J = (
+        err
+        + ε * excesso_custo
+        + penal_restr
+        + dens_penalty
+        + meal_penalty
+        + variety_penalty
+        + prot_extra_pen
+    )
+
     return J, kcal, carb, prot, gord, custo
 
-def _criar_individuo(n_refeicoes, itens, itens_idx, min_itens=2, max_itens=4):
-    # Cada refeição recebe 2–4 itens, porções entre 30g e 200g
+
+# ============================================================
+#                Operadores do Algoritmo Genético
+# ============================================================
+def _criar_individuo(
+    n_refeicoes: int,
+    itens: List[FoodItem],
+    itens_idx: List[int],
+    min_itens: int = 2,
+    max_itens: int = 3,
+    low_kcal_bias: float = 0.6,
+):
+    """
+    Cria um indivíduo inicial (cardápio do dia).
+
+    Estratégia:
+      - Preferir itens menos calóricos (low_kcal_bias)
+      - Para cada refeição:
+          * 1 alimento base de carbo
+          * 1 alimento proteico
+          * 0–1 alimento extra neutro
+    """
+    # ordena por kcal pra começar preferindo itens menos densos
+    idx_sorted = sorted(itens_idx, key=lambda i: itens[i].kcal_100g)
+    corte = max(1, int(len(idx_sorted) * float(low_kcal_bias)))
+    base_pool = idx_sorted[:corte] if corte < len(idx_sorted) else idx_sorted
+
+    # pools especializados
+    carb_pool = [i for i in base_pool if _is_carb_base(itens[i])] or base_pool[:]
+    prot_pool = [i for i in base_pool if _is_high_protein(itens[i])] or base_pool[:]
+    neutro_pool = [i for i in base_pool if not _is_high_fat(itens[i])] or base_pool[:]
+
     individuo = []
+
     for _ in range(n_refeicoes):
         n = random.randint(min_itens, max_itens)
         genes = []
-        for __ in range(n):
-            idx = random.randrange(len(itens_idx))
-            porcao = random.choice([40, 60, 80, 100, 120, 150, 200])
-            genes.append((idx, porcao))
+
+        # 1) sempre 1 carbo base
+        idx_carb = random.choice(carb_pool)
+        por_carb = _safe_portion(
+            itens[idx_carb],
+            random.choice([120, 150, 180, 200])
+        )
+        genes.append((itens_idx.index(idx_carb), por_carb))
+
+        # 2) sempre 1 proteico
+        idx_prot = random.choice(prot_pool)
+        por_prot = _safe_portion(
+            itens[idx_prot],
+            random.choice([70, 90, 110, 130])
+        )
+        genes.append((itens_idx.index(idx_prot), por_prot))
+
+        # 3) opcional: 1 extra neutro (legume, fruta, cereal, etc.)
+        if n > 2:
+            idx_extra = random.choice(neutro_pool)
+            por_extra = _safe_portion(
+                itens[idx_extra],
+                random.choice([60, 80, 100])
+            )
+            genes.append((itens_idx.index(idx_extra), por_extra))
+
         individuo.append(genes)
+
     return individuo
 
-def _mutar(ind, taxa_item=0.2, taxa_porc=0.3, itens_idx=None):
+
+def _mutar(ind, taxa_item=0.25, taxa_porc=0.40, itens_idx=None, contexto=None):
+    """
+    Operador de mutação:
+      - troca itens (com probabilidade taxa_item)
+      - ajusta porções (com probabilidade taxa_porc)
+      - garante que cada refeição tenha:
+          * pelo menos 1 proteico
+          * pelo menos 1 base de carbo
+    """
+    itens = contexto.get("itens") if contexto else None
+    full_idx = contexto.get("itens_idx") if contexto else None
+
     for refeicao in ind:
-        # Troca item
+        # troca item
         if random.random() < taxa_item and itens_idx:
             i = random.randrange(len(refeicao))
             refeicao[i] = (random.randrange(len(itens_idx)), refeicao[i][1])
-        # Ajusta porção
+
+        # ajusta porção
         if random.random() < taxa_porc:
             j = random.randrange(len(refeicao))
-            delta = random.choice([-40, -20, +20, +40])
-            nova = max(20, min(300, refeicao[j][1] + delta))
-            refeicao[j] = (refeicao[j][0], nova)
+            delta = random.choice([-20, +20])
+            idxj, porj = refeicao[j]
+            if itens and full_idx:
+                itemj = itens[full_idx[idxj]]
+                nova = _safe_portion(itemj, porj + delta)
+            else:
+                nova = max(20, min(200, porj + delta))
+            refeicao[j] = (idxj, nova)
+
+        # garante sempre proteína + carbo em cada refeição
+        if itens and full_idx and len(refeicao) > 0:
+            has_prot = any(_is_high_protein(itens[full_idx[idx]]) for (idx, _) in refeicao)
+            has_carb = any(_is_carb_base(itens[full_idx[idx]]) for (idx, _) in refeicao)
+
+            # se não tiver proteína, substitui um gene por alimento proteico
+            if not has_prot:
+                j = random.randrange(len(refeicao))
+                prot_ids = [i for i in full_idx if _is_high_protein(itens[i])] or full_idx
+                idx_p = random.choice(prot_ids)
+                por = refeicao[j][1]
+                por = _safe_portion(itens[idx_p], por)
+                refeicao[j] = (full_idx.index(idx_p), por)
+
+            # se não tiver carbo base, substitui um gene por base de carbo
+            if not has_carb:
+                j = random.randrange(len(refeicao))
+                carb_ids = [i for i in full_idx if _is_carb_base(itens[i])] or full_idx
+                idx_c = random.choice(carb_ids)
+                por = refeicao[j][1]
+                por = _safe_portion(itens[idx_c], por)
+                refeicao[j] = (full_idx.index(idx_c), por)
+
     return ind
 
-def _crossover(p1, p2):
-    # 1 ponto ao nível de refeição
-    n = len(p1)
-    if n < 2: return p1[:], p2[:]
-    cp = random.randrange(1, n)
-    f1 = p1[:cp] + p2[cp:]
-    f2 = p2[:cp] + p1[cp:]
-    return f1, f2
 
+def _crossover(p1, p2):
+    """
+    Crossover de 1 ponto ao nível de refeição.
+    """
+    n = len(p1)
+    if n < 2:
+        return p1[:], p2[:]
+    cp = random.randrange(1, n)
+    return p1[:cp] + p2[cp:], p2[:cp] + p1[cp:]
+
+
+# ============================================================
+#           Ajuste global de calorias (pós-processamento)
+# ============================================================
+def _totais_cardapio(sol, itens_idx, itens):
+    """
+    Calcula totais de kcal, CHO, PRO, GORD, custo
+    para um cardápio completo.
+    """
+    kcal = carb = prot = gord = custo = 0.0
+    for ref in sol:
+        for (idx, por) in ref:
+            it = itens[itens_idx[idx]]
+            k, c, p, g, pr = _nutr_por_porcao(it, por)
+            kcal += k
+            carb += c
+            prot += p
+            gord += g
+            custo += pr
+    return kcal, carb, prot, gord, custo
+
+
+def _escala_para_kcal(sol, itens_idx, itens, targets, fator_min=0.8, fator_max=1.4):
+    """
+    Escala TODAS as porções por um fator global para aproximar
+    as calorias em relação ao alvo.
+
+    fator = alvo_kcal / kcal_atual, limitado por [fator_min, fator_max].
+
+    Isso ajuda a:
+      - reduzir ou aumentar tudo proporcionalmente
+      - sem quebrar o padrão do cardápio encontrado.
+    """
+    kcal_atual, carb, prot, gord, custo = _totais_cardapio(sol, itens_idx, itens)
+    alvo = float(targets["kcal"])
+    if kcal_atual <= 0:
+        return sol  # evita divisão por zero
+
+    fator = alvo / kcal_atual
+    fator = max(fator_min, min(fator_max, fator))
+
+    # se já está bem próximo, não mexe
+    if 0.95 <= fator <= 1.05:
+        return sol
+
+    nova_sol = []
+    for ref in sol:
+        nova_ref = []
+        for (idx, por) in ref:
+            it = itens[itens_idx[idx]]
+            novo_por = int(round(por * fator))
+            novo_por = _safe_portion(it, novo_por)
+            nova_ref.append((idx, novo_por))
+        nova_sol.append(nova_ref)
+
+    return nova_sol
+
+
+# ============================================================
+#                 Função principal do módulo
+# ============================================================
 def gerar_cardapio(targets: Dict, params: Dict) -> Dict:
     """
-    targets = {"kcal": int, "carb_g": int, "prot_g": int, "fat_g": int}
-    params = {
-      "n_refeicoes": 5,
-      "restricoes": {"banidos": ["lactose"], "max_colesterol_mg": 300},
-      "orcamento_max": 30.0,
-      "tabela_csv": "data/taco_min.csv",
-      "pop": 80, "ger": 80, "elit": 4,
-      "pesos": (1.0,0.7,0.9,0.7,1.0)
-    }
-    """
-    random.seed(params.get("seed", 42))
-    n_refeicoes = int(params.get("n_refeicoes", 5))
-    pop_size = int(params.get("pop", 80))
-    ger = int(params.get("ger", 80))
-    elit = int(params.get("elit", 4))
+    Gera um cardápio otimizado via Algoritmo Genético.
 
+    targets:
+        {
+          "kcal":   int,
+          "carb_g": int,
+          "prot_g": int,
+          "fat_g":  int
+        }
+
+    params (exemplo):
+        {
+          "n_refeicoes": 5,
+          "restricoes": {"banidos": ["lactose"]},
+          "orcamento_max": 30.0,
+          "tabela_csv": "assets/data/taco_min.csv",
+
+          # parâmetros do AG:
+          "pop": 120,
+          "ger": 200,
+          "elit": 6,
+          "seed": 7,
+
+          # pesos de erro:
+          "pesos": (4.0, 3.2, 1.8, 1.2, 1.0),
+
+          # outros:
+          "high_density_kcal_threshold": 550,
+          "low_kcal_bias": 0.6,
+          "meal_carb_min": 35.0,
+          "meal_prot_min": 18.0
+        }
+
+    Retorna:
+        {
+          "fitness":  { "J": ..., "kcal": ..., "carb_g": ..., "prot_g": ..., "fat_g": ..., "custo": ... },
+          "refeicoes": [
+              [ {"id":..., "nome":..., "porcao_g":...}, ... ],  # refeição 1
+              ...
+          ],
+          "historico": [... últimas 10 gerações ...]
+        }
+    """
+    # semente de aleatoriedade para reprodutibilidade
+    random.seed(params.get("seed", 42))
+
+    # hiperparâmetros do AG
+    n_refeicoes = int(params.get("n_refeicoes", 5))
+    pop_size = int(params.get("pop", 120))
+    ger = int(params.get("ger", 200))
+    elit = int(params.get("elit", 6))
+    low_bias = float(params.get("low_kcal_bias", 0.6))
+
+    # carrega tabela de alimentos
     itens = carregar_tabela_alimentos(params["tabela_csv"])
     if not itens:
         raise RuntimeError("Tabela de alimentos vazia ou inválida.")
     itens_idx = list(range(len(itens)))
 
-    # População
-    pop = [_criar_individuo(n_refeicoes, itens, itens_idx) for _ in range(pop_size)]
+    # população inicial
+    pop = [
+        _criar_individuo(
+            n_refeicoes,
+            itens,
+            itens_idx,
+            min_itens=2,
+            max_itens=3,
+            low_kcal_bias=low_bias
+        )
+        for _ in range(pop_size)
+    ]
 
     def avaliar(ind):
         return _avalia_cardapio(ind, itens_idx, itens, targets, params)
 
-    # Evolução
     historico = []
+
+    # loop de gerações
     for g in range(ger):
-        # Avaliação e elitismo
         avals = [(ind, *avaliar(ind)) for ind in pop]
-        avals.sort(key=lambda x: x[1])  # por J
+        avals.sort(key=lambda x: x[1])  # ordena por J (fitness) crescente
         elite = [a[0] for a in avals[:elit]]
+
         historico.append({
-            "ger": g, "best_J": avals[0][1],
-            "kcal": avals[0][2], "carb": avals[0][3], "prot": avals[0][4], "gord": avals[0][5], "custo": avals[0][6]
+            "ger": g,
+            "best_J": avals[0][1],
+            "kcal": avals[0][2],
+            "carb": avals[0][3],
+            "prot": avals[0][4],
+            "gord": avals[0][5],
+            "custo": avals[0][6],
         })
 
-        # Seleção por torneio
+        # seleção por torneio
         def torneio(k=3):
             cand = random.sample(avals, k)
             cand.sort(key=lambda x: x[1])
             return cand[0][0]
 
-        filhos = elite[:]  # mantém elite
+        filhos = elite[:]
         while len(filhos) < pop_size:
             p1, p2 = torneio(), torneio()
             f1, f2 = _crossover(p1, p2)
-            f1 = _mutar(f1, itens_idx=itens_idx)
-            f2 = _mutar(f2, itens_idx=itens_idx)
+            ctx = {"itens": itens, "itens_idx": itens_idx}
+            f1 = _mutar(f1, itens_idx=itens_idx, contexto=ctx)
+            f2 = _mutar(f2, itens_idx=itens_idx, contexto=ctx)
             filhos.extend([f1, f2])
+
         pop = filhos[:pop_size]
 
-    # Melhor solução final
+    # melhor solução final
     final = [(ind, *avaliar(ind)) for ind in pop]
     final.sort(key=lambda x: x[1])
     best, J, kcal, carb, prot, gord, custo = final[0]
 
-    # Organiza por refeição (nome + porção)
+    # ajuste global pra aproximar das kcal alvo
+    best = _escala_para_kcal(best, itens_idx, itens, targets, fator_min=0.8, fator_max=1.8)
+    J, kcal, carb, prot, gord, custo = _avalia_cardapio(best, itens_idx, itens, targets, params)
+
+    # organiza saída em formato amigável
     refeicoes = []
     for r in best:
         blocos = []
         for (idx, porcao) in r:
             it = itens[itens_idx[idx]]
+            porcao = _safe_portion(it, porcao)
             blocos.append({
-                "id": it.id, "nome": it.nome, "porcao_g": porcao
+                "id": it.id,
+                "nome": it.nome,
+                "porcao_g": porcao
             })
         refeicoes.append(blocos)
 
     return {
-        "fitness": {"J": J, "kcal": kcal, "carb_g": carb, "prot_g": prot, "fat_g": gord, "custo": custo},
+        "fitness": {
+            "J": J,
+            "kcal": kcal,
+            "carb_g": carb,
+            "prot_g": prot,
+            "fat_g": gord,
+            "custo": custo
+        },
         "refeicoes": refeicoes,
-        "historico": historico[-10:],  # últimas 10 gerações para debug/plot
+        "historico": historico[-10:],  # últimas 10 gerações (pra plot/relatório)
     }
