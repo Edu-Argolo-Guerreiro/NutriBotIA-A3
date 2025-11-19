@@ -1,74 +1,197 @@
-# 🤖 NutriBotIA – Recomendação Inteligente de Dietas
-
-**NutriBotIA** é um chatbot desenvolvido com técnicas de Inteligência Artificial para recomendar cardápios personalizados considerando:
-
-✅ Renda  
-✅ Tempo disponível  
-✅ Preferências alimentares  
-✅ Restrições/alergias  
-✅ Metas nutricionais
-
-O projeto utiliza:
-
-- **Lógica Fuzzy** — para interpretar fatores subjetivos do usuário
-- **Algoritmos Genéticos** — para otimizar o cardápio ideal
-- **Chatbot (Streamlit)** — interface amigável acessível pelo navegador
+Aqui está o **README totalmente atualizado**, alinhado à nova arquitetura do projeto (com Core Engine, Fuzzy, Genetic Algorithm, Chatbot Python, API Flask e bot WhatsApp).
+Organizei tudo de forma profissional e clara para apresentação acadêmica ou GitHub.
+Incluí também o bloco solicitado com o `requirements.txt`.
 
 ---
 
-## 🚀 Objetivo
+# 🤖 **NutriBotIA – Recomendação Inteligente de Dietas (Fuzzy + AG + Chatbot)**
 
-Auxiliar usuários na organização de uma alimentação saudável e acessível, alinhada ao seu estilo de vida.
+**NutriBotIA** é um sistema completo de Inteligência Artificial capaz de gerar cardápios personalizados a partir de preferências, objetivos e dados metabólicos do usuário.
+
+Ele combina:
+
+* 🧠 **Lógica Fuzzy** — interpreta fatores subjetivos (atividade, colesterol, objetivo)
+* 🧬 **Algoritmos Genéticos** — monta o melhor cardápio possível com base em metas nutricionais
+* 🗂️ **Core Engine** — integra Fuzzy + AG + rótulos da dieta
+* 💬 **Chatbot (Python + Flask)** — fluxo conversacional estruturado
+* 📱 **Bot WhatsApp (Node.js)** — interação em tempo real via WhatsApp
+* 🌐 **API REST** — comunicação entre interface e motor de IA
+* 📊 **TACO** — base nutricional reduzida com alimentos padronizados
 
 ---
 
-## 🧠 Arquitetura
+# 🚀 **Objetivo**
 
-Usuário → Chatbot → Módulo Fuzzy → Algoritmo Genético → Dieta Recomendada
+Auxiliar usuários a organizar uma alimentação saudável, prática e adaptada ao estilo de vida real, considerando:
+
+* Preferências alimentares
+* Restrições e alergias
+* Orçamento diário
+* Número de refeições
+* Objetivo (cutting, manutenção, bulking)
+* Atividade física
+* Colesterol
 
 ---
 
-## 📂 Estrutura do repositório
+# 🧠 **Arquitetura do Sistema**
 
+```
+Usuário (WhatsApp / API / Interface)
+           ↓
+     Chatbot Engine
+           ↓
+      Core Engine
+   ┌───────────────┐
+   │  Lógica Fuzzy  │ → calculo de macros e VET
+   │ (skfuzzy)      │
+   └───────────────┘
+           ↓
+   ┌───────────────┐
+   │ Algoritmo Gen.│ → geração do cardápio ideal
+   │ (seleção, mut. │
+   │  crossover)    │
+   └───────────────┘
+           ↓
+  Cardápio otimizado + rótulos + métricas
+```
+
+---
+
+# 📂 **Estrutura Atual do Repositório**
+
+```
 NutriBotIA/
-├── data/
-│ └── alimentos.csv
-├── src/
-│ ├── fuzzy_module.py
-│ ├── genetic_module.py
-│ └── main.py
-├── docs/
-│ └── poster.pdf
+├── assets/
+│   ├── chatbot/
+│   │   ├── api_chat.py
+│   │   ├── chatbot_engine.py
+│   │   └── bot_wwjs.js
+│   │
+│   ├── core_engine.py
+│   │
+│   ├── fuzzy_module/
+│   │   ├── calcular_macros.py
+│   │   ├── calcular_vet.py
+│   │   └── __init__.py
+│   │
+│   ├── genetic_module/
+│   │   └── genetic_module.py
+│   │
+│   └── data/
+│       └── taco_min.csv
+│
+├── app.py                    # script de teste rápido
 ├── README.md
 └── requirements.txt
-
----
-
-## ⚙️ Clonar o Repositório
-
-```bash
-git clone git@github.com:Edu-Argolo-Guerreiro/NutriBotIA-A3.git
-```
-
-```
-cd NutriBotIA-A3
 ```
 
 ---
 
-## 🔧 Instalação
+# 🔧 **Instalação**
 
 Requisitos:
 
-- Python 3.12
-- pip instalado
+* Python **3.10+**
+* pip instalado
+* Node.js (opcional, para WhatsApp Bot)
+
+### 1️⃣ **Clonar o Repositório**
+
+```bash
+git clone https://github.com/Edu-Argolo-Guerreiro/NutriBotIA-A3.git
+cd NutriBotIA-A3
+```
+
+### 2️⃣ **Instalar dependências Python**
 
 ```bash
 pip install -r requirements.txt
 ```
 
-## Programa fuzzy
+### 3️⃣ (**Opcional**) Instalar dependências do bot WhatsApp
 
 ```bash
-python .\assets\fuzzy_module\__init__.py
+cd assets/chatbot
+npm install
 ```
+
+---
+
+# 📄 **requirements.txt (incluído também dentro do README)**
+
+```txt
+pandas
+numpy
+matplotlib
+scikit-fuzzy
+scipy
+networkx
+flask
+openai
+whatsapp-web.js   # via npm, não via pip
+```
+
+> *Observação:* `whatsapp-web.js` é instalado via Node (npm), não via pip.
+
+---
+
+# ▶️ **Como executar cada parte do projeto**
+
+---
+
+## 🧪 **1. Testar o motor principal (Fuzzy + AG)**
+
+```bash
+python app.py
+```
+
+---
+
+## 🌐 **2. Subir a API Flask (para chatbot e WhatsApp)**
+
+```bash
+python assets/chatbot/api_chat.py
+```
+
+A API ficará disponível em:
+
+```
+http://localhost:5000/mensagem
+```
+
+---
+
+## 💬 **3. Chatbot via WhatsApp (Node.js)**
+
+Em outro terminal:
+
+```bash
+node assets/chatbot/bot_wwjs.js
+```
+
+Escaneie o QR Code no seu celular.
+
+---
+
+## 🧠 **4. Rodar diretamente o módulo fuzzy**
+
+```bash
+python assets/fuzzy_module/__init__.py
+```
+
+---
+
+# ⭐ **Contribuições Futuras**
+
+* Validação nutricional avançada
+* Recomendações de receitas completas
+* Integração com apps mobile
+* Ajuste fino do AG por histórico do usuário
+* Painel web administrativo (React + Flask)
+
+---
+
+# 📜 **Licença**
+
+Projeto desenvolvido para fins educacionais e experimentais no contexto da disciplina A3.

@@ -1,5 +1,3 @@
-# assets/chatbot/teste_chatbot.py
-
 import os
 from chatbot_engine import ChatState, processar_mensagem
 
