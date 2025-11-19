@@ -58,10 +58,11 @@ Usuário (WhatsApp / API / Interface)
 NutriBotIA/
 ├── assets/
 │   ├── chatbot/
-│   │   ├── api_chat.py
 │   │   ├── chatbot_engine.py
+│   │   ├── teste_chatbot.py
 │   │   └── bot_wwjs.js
 │   │
+│   ├── api_chat.py
 │   ├── core_engine.py
 │   │
 │   ├── fuzzy_module/
@@ -176,16 +177,6 @@ python assets/fuzzy_module/__init__.py
 
 ---
 
-# ⭐ **Contribuições Futuras**
-
-* Validação nutricional avançada
-* Recomendações de receitas completas
-* Integração com apps mobile
-* Ajuste fino do AG por histórico do usuário
-* Painel web administrativo (React + Flask)
-
----
-
 # 📜 **Licença**
 
-Projeto desenvolvido para fins educacionais e experimentais no contexto da disciplina A3.
+Projeto desenvolvido para fins educacionais e experimentais no contexto da disciplina A3 - SISTEMA DE CONTROLE E INTELIGENCIA ARTIFICIAL - UNIFACS (UNIVERSIDADE DE SALVADOR).
