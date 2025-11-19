@@ -1,9 +1,3 @@
-Aqui está o **README totalmente atualizado**, alinhado à nova arquitetura do projeto (com Core Engine, Fuzzy, Genetic Algorithm, Chatbot Python, API Flask e bot WhatsApp).
-Organizei tudo de forma profissional e clara para apresentação acadêmica ou GitHub.
-Incluí também o bloco solicitado com o `requirements.txt`.
-
----
-
 # 🤖 **NutriBotIA – Recomendação Inteligente de Dietas (Fuzzy + AG + Chatbot)**
 
 **NutriBotIA** é um sistema completo de Inteligência Artificial capaz de gerar cardápios personalizados a partir de preferências, objetivos e dados metabólicos do usuário.
